@@ -76,5 +76,24 @@
       "&src=china-trip&coordinate=gaode&callnative=1";
   }
 
-  return { todayISO, diffDays, resolveView, reorderIds, mergeDayItems, gmaps, amap };
+  // Android intent:// URL — names the Amap package directly, so it force-opens the app
+  // even from inside a webview (where plain https App-Links get stuck on the web page).
+  // If Amap isn't installed, Android follows browser_fallback_url to the web map.
+  function amapApp(item) {
+    const kw = [item.zh || item.title, item.cityZh || item.city || ""].filter(Boolean).join(" ");
+    const deep = "poi?sourceApplication=chinatrip&keywords=" + encodeURIComponent(kw) + "&dev=0";
+    return "intent://" + deep +
+      "#Intent;scheme=androidamap;package=com.autonavi.minimap;" +
+      "S.browser_fallback_url=" + encodeURIComponent(amap(item)) + ";end";
+  }
+
+  // Android intent:// for Google Maps too — same webview-handoff problem.
+  function gmapsApp(item) {
+    const web = gmaps(item);
+    return "intent://" + web.replace(/^https?:\/\//, "") +
+      "#Intent;scheme=https;package=com.google.android.apps.maps;" +
+      "S.browser_fallback_url=" + encodeURIComponent(web) + ";end";
+  }
+
+  return { todayISO, diffDays, resolveView, reorderIds, mergeDayItems, gmaps, amap, amapApp, gmapsApp };
 });

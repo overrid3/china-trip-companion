@@ -116,6 +116,7 @@
 (function(){
   "use strict";
   const KEY = "china-trip-state-v1";
+  const IS_ANDROID = /Android/i.test(navigator.userAgent || "");
   const $app = document.getElementById("app");
   let SEED = null, state = load(), view = "today", focusDay = 0;
 
@@ -151,8 +152,13 @@
     }
     const actions = [];
     if (canNav){
-      actions.push(`<a class="btn map" target="_blank" rel="noopener" href="${esc(CT.gmaps(nav))}">🗺 Maps</a>`);
-      actions.push(`<a class="btn map" target="_blank" rel="noopener" href="${esc(CT.amap(nav))}">🧭 Amap</a>`);
+      // Android: intent:// in the SAME window so Chrome fires the app and the PWA stays put.
+      // Web/iOS/desktop: https link in a new tab.
+      const tgt = IS_ANDROID ? "" : ` target="_blank" rel="noopener"`;
+      const gmHref = IS_ANDROID ? CT.gmapsApp(nav) : CT.gmaps(nav);
+      const amHref = IS_ANDROID ? CT.amapApp(nav) : CT.amap(nav);
+      actions.push(`<a class="btn map"${tgt} href="${esc(gmHref)}">🗺 Maps</a>`);
+      actions.push(`<a class="btn map"${tgt} href="${esc(amHref)}">🧭 Amap</a>`);
     }
     if (nav.zh) actions.push(`<button class="btn" data-act="copy" data-copy="${esc(nav.zh)}">📋 ${esc(nav.zh)}</button>`);
     actions.push(`<button class="btn" data-act="note">📝 Nota</button>`);

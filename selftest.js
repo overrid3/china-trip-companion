@@ -43,4 +43,13 @@ const am = CT.amap({ zh: "兵马俑", cityZh: "西安" });
 assert.ok(am.startsWith("https://uri.amap.com/search?keyword="));
 assert.ok(am.includes("callnative=1") && am.includes("src=china-trip") && am.includes("coordinate=gaode"));
 
+// Android intent:// deep links: right package/scheme, keeps a web fallback, well-formed
+const amApp = CT.amapApp({ zh: "兵马俑", cityZh: "西安" });
+assert.ok(amApp.startsWith("intent://poi?") && amApp.endsWith(";end"));
+assert.ok(amApp.includes("scheme=androidamap") && amApp.includes("package=com.autonavi.minimap"));
+assert.ok(amApp.includes("S.browser_fallback_url=" + encodeURIComponent("https://uri.amap.com/search").slice(0, 20)));
+const gmApp = CT.gmapsApp({ zh: "兵马俑", cityZh: "西安" });
+assert.ok(gmApp.startsWith("intent://www.google.com/maps/search/") && gmApp.endsWith(";end"));
+assert.ok(gmApp.includes("package=com.google.android.apps.maps") && gmApp.includes("S.browser_fallback_url="));
+
 console.log("ok — all logic checks passed");
