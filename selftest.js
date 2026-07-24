@@ -39,6 +39,8 @@ assert.deepStrictEqual(CT.mergeDayItems(seed, {}).visible.map((i) => i.id), ["x"
 // nav links carry the Chinese name, no coordinates
 const gm = CT.gmaps({ title: "Terracotta", zh: "兵马俑", cityZh: "西安" });
 assert.ok(gm.includes(encodeURIComponent("兵马俑 西安")) && !gm.includes("@"));
-assert.ok(CT.amap({ zh: "兵马俑", cityZh: "西安" }).startsWith("https://uri.amap.com/search?keyword="));
+const am = CT.amap({ zh: "兵马俑", cityZh: "西安" });
+assert.ok(am.startsWith("https://uri.amap.com/search?keyword="));
+assert.ok(am.includes("callnative=1") && am.includes("src=china-trip") && am.includes("coordinate=gaode"));
 
 console.log("ok — all logic checks passed");

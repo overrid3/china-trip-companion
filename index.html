@@ -3,15 +3,26 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#14161a" />
+<meta name="theme-color" content="#14161a" id="themeColor" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icon.svg" />
 <link rel="apple-touch-icon" href="icon.svg" />
 <title>Cina · Itinerario</title>
+<script>
+  // Set theme before first paint (no flash). Default: saved choice, else OS preference.
+  document.documentElement.dataset.theme =
+    localStorage.getItem("ct-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+</script>
 <style>
-  :root{
+  :root, [data-theme="dark"]{
     --bg:#14161a; --card:#1e2128; --card2:#242833; --line:#2c313c;
     --txt:#e8e8ea; --mut:#9aa0aa; --accent:#e0532f; --train:#3a7bd5; --lodge:#d9a441; --ok:#4caf7d;
+    --note-bg:#2a2f1e; --note-line:#3c4426;
+  }
+  [data-theme="light"]{
+    --bg:#f4f5f7; --card:#ffffff; --card2:#eef0f4; --line:#e0e3ea;
+    --txt:#1a1c22; --mut:#697080; --accent:#e0532f; --train:#2f6fd0; --lodge:#a9781f; --ok:#2e9e6b;
+    --note-bg:#fff8e1; --note-line:#ece0b3;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 -apple-system,Roboto,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
@@ -42,7 +53,12 @@
   .idesc{font-size:13.5px;color:var(--mut);margin-top:2px}
   .imeta{font-size:13px;color:var(--mut);margin-top:2px}
   .imeta b{color:var(--txt)}
-  .inote{font-size:13.5px;margin-top:6px;padding:6px 8px;background:#2a2f1e;border:1px solid #3c4426;border-radius:8px}
+  .inote{font-size:13.5px;margin-top:6px;padding:6px 8px;background:var(--note-bg);border:1px solid var(--note-line);border-radius:8px}
+  .h-top{display:flex;align-items:flex-start;gap:8px}
+  .h-top>.h-titles{flex:1;min-width:0}
+  .h-actions{display:flex;gap:6px;flex:0 0 auto}
+  .h-actions button{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:7px 10px;font-size:15px;line-height:1}
+  .h-actions #installBtn{border-color:var(--accent)}
   .ord{display:flex;flex-direction:column;gap:2px}
   .ord button{width:28px;height:22px;background:var(--card);border:1px solid var(--line);border-radius:6px;color:var(--mut);font-size:11px;padding:0}
   .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
@@ -76,8 +92,16 @@
 </head>
 <body>
 <header>
-  <div class="h-title" id="hTitle">Cina · Itinerario</div>
-  <div class="h-sub" id="hSub"></div>
+  <div class="h-top">
+    <div class="h-titles">
+      <div class="h-title" id="hTitle">Cina · Itinerario</div>
+      <div class="h-sub" id="hSub"></div>
+    </div>
+    <div class="h-actions">
+      <button id="installBtn" hidden aria-label="Installa app" title="Installa app">⬇️</button>
+      <button id="themeBtn" aria-label="Cambia tema" title="Cambia tema">🌙</button>
+    </div>
+  </div>
   <nav>
     <button data-view="today" class="on">Oggi</button>
     <button data-view="overview">Itinerario</button>
@@ -317,6 +341,29 @@
     const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select();
     try{document.execCommand("copy");toast("Copiato: "+text);}catch(e){} ta.remove();
   }
+
+  // ---- theme toggle + install prompt ----
+  const themeColor=document.getElementById("themeColor"), themeBtn=document.getElementById("themeBtn");
+  function applyTheme(t){
+    document.documentElement.dataset.theme=t;
+    themeBtn.textContent=t==="light"?"🌙":"☀️";
+    themeColor.content=t==="light"?"#f4f5f7":"#14161a";
+  }
+  applyTheme(document.documentElement.dataset.theme||"dark");
+  themeBtn.addEventListener("click",()=>{
+    const t=document.documentElement.dataset.theme==="light"?"dark":"light";
+    localStorage.setItem("ct-theme",t); applyTheme(t);
+  });
+
+  const installBtn=document.getElementById("installBtn");
+  let deferredPrompt=null;
+  window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; installBtn.hidden=false; });
+  installBtn.addEventListener("click",async()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt(); await deferredPrompt.userChoice;
+    deferredPrompt=null; installBtn.hidden=true;
+  });
+  window.addEventListener("appinstalled",()=>{ installBtn.hidden=true; });
 
   // ---- boot ----
   fetch("seed.json").then(r=>r.json()).then(seed=>{

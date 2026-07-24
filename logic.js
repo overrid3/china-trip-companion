@@ -69,8 +69,11 @@
   function amap(item) {
     const kw = item.zh || item.title;
     const city = item.cityZh || item.city || "";
+    // callnative=1 opens the Amap app on Android; src+coordinate are required for the
+    // web fallback to render results instead of a blank landing page.
     return "https://uri.amap.com/search?keyword=" + encodeURIComponent(kw) +
-      (city ? "&city=" + encodeURIComponent(city) : "");
+      (city ? "&city=" + encodeURIComponent(city) : "") +
+      "&src=china-trip&coordinate=gaode&callnative=1";
   }
 
   return { todayISO, diffDays, resolveView, reorderIds, mergeDayItems, gmaps, amap };
