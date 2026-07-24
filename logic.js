@@ -67,10 +67,16 @@
     return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
   }
   function amap(item) {
+    // With coords, drop a precise marker. coordinate=wgs84 tells Amap the point is raw GPS
+    // so it applies the GCJ-02 offset itself.
+    if (item.lat != null && item.lon != null) {
+      return "https://uri.amap.com/marker?position=" + item.lon + "," + item.lat +
+        "&name=" + encodeURIComponent(item.zh || item.title) +
+        "&src=china-trip&coordinate=wgs84&callnative=1";
+    }
     const kw = item.zh || item.title;
     const city = item.cityZh || item.city || "";
-    // callnative=1 opens the Amap app on Android; src+coordinate are required for the
-    // web fallback to render results instead of a blank landing page.
+    // Name search is city-scoped but ranks by current location — fine on-site, wrong from afar.
     return "https://uri.amap.com/search?keyword=" + encodeURIComponent(kw) +
       (city ? "&city=" + encodeURIComponent(city) : "") +
       "&src=china-trip&coordinate=gaode&callnative=1";
@@ -80,8 +86,15 @@
   // even from inside a webview (where plain https App-Links get stuck on the web page).
   // If Amap isn't installed, Android follows browser_fallback_url to the web map.
   function amapApp(item) {
-    const kw = [item.zh || item.title, item.cityZh || item.city || ""].filter(Boolean).join(" ");
-    const deep = "poi?sourceApplication=chinatrip&keywords=" + encodeURIComponent(kw) + "&dev=0";
+    // Coords -> viewMap pins the exact spot no matter where the phone is (dev=1: the input is
+    // WGS-84 GPS and Amap applies the GCJ-02 offset itself). No coords -> keyword search, which
+    // Amap ranks around the CURRENT location, so it mis-pins when you're not on-site yet.
+    const deep = (item.lat != null && item.lon != null)
+      ? "viewMap?sourceApplication=chinatrip&poiname=" + encodeURIComponent(item.zh || item.title) +
+        "&lat=" + item.lat + "&lon=" + item.lon + "&dev=1"
+      : "poi?sourceApplication=chinatrip&keywords=" +
+        encodeURIComponent([item.zh || item.title, item.cityZh || item.city || ""].filter(Boolean).join(" ")) +
+        "&dev=0";
     return "intent://" + deep +
       "#Intent;scheme=androidamap;package=com.autonavi.minimap;" +
       "S.browser_fallback_url=" + encodeURIComponent(amap(item)) + ";end";

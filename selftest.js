@@ -52,4 +52,11 @@ const gmApp = CT.gmapsApp({ zh: "兵马俑", cityZh: "西安" });
 assert.ok(gmApp.startsWith("intent://www.google.com/maps/search/") && gmApp.endsWith(";end"));
 assert.ok(gmApp.includes("package=com.google.android.apps.maps") && gmApp.includes("S.browser_fallback_url="));
 
+// With coords: Amap pins the exact spot via viewMap+dev=1 (WGS-84), no location-biased search
+const amPt = CT.amapApp({ zh: "故宫", lat: 39.9163, lon: 116.3972 });
+assert.ok(amPt.startsWith("intent://viewMap?") && amPt.includes("lat=39.9163") && amPt.includes("lon=116.3972"));
+assert.ok(amPt.includes("dev=1") && amPt.includes("package=com.autonavi.minimap") && !amPt.includes("keywords="));
+const amWeb = CT.amap({ zh: "故宫", lat: 39.9163, lon: 116.3972 });
+assert.ok(amWeb.startsWith("https://uri.amap.com/marker?position=116.3972,39.9163") && amWeb.includes("coordinate=wgs84"));
+
 console.log("ok — all logic checks passed");

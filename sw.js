@@ -1,5 +1,5 @@
 // Offline app shell. Bump CACHE on every deploy to push updates to installed phones.
-const CACHE = "china-trip-v3";
+const CACHE = "china-trip-v4";
 const ASSETS = ["./", "index.html", "logic.js", "seed.json", "manifest.json", "icon.svg"];
 
 self.addEventListener("install", (e) => {
