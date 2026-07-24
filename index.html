@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#14161a" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<title>Cina · Itinerario</title>
+<style>
+  :root{
+    --bg:#14161a; --card:#1e2128; --card2:#242833; --line:#2c313c;
+    --txt:#e8e8ea; --mut:#9aa0aa; --accent:#e0532f; --train:#3a7bd5; --lodge:#d9a441; --ok:#4caf7d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 -apple-system,Roboto,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+  a{color:inherit}
+  header{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 14px calc(env(safe-area-inset-bottom,0px));border-bottom:1px solid var(--line)}
+  .h-title{font-weight:700}
+  .h-sub{color:var(--mut);font-size:13px}
+  nav{display:flex;gap:8px;margin-top:10px}
+  nav button{flex:1;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 6px;font-size:14px}
+  nav button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  main{padding:14px;max-width:640px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+  .day-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .day-date{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+  .day-stop{font-size:20px;font-weight:700}
+  .badge{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--card2);color:var(--mut);border:1px solid var(--line)}
+  .badge.today{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .item{border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;margin-top:10px;background:var(--card2)}
+  .item.transport{border-left:3px solid var(--train)}
+  .item.lodging{border-left:3px solid var(--lodge)}
+  .irow{display:flex;gap:10px;align-items:flex-start}
+  .chk{flex:0 0 auto;width:26px;height:26px;border-radius:50%;border:2px solid var(--mut);background:transparent;color:transparent;font-size:15px;line-height:22px;text-align:center;margin-top:1px}
+  .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .ibody{flex:1;min-width:0}
+  .ititle{font-weight:600}
+  .ititle .zh{color:var(--mut);font-weight:400;font-size:14px;margin-left:4px}
+  .done .ititle{text-decoration:line-through;color:var(--mut)}
+  .idesc{font-size:13.5px;color:var(--mut);margin-top:2px}
+  .imeta{font-size:13px;color:var(--mut);margin-top:2px}
+  .imeta b{color:var(--txt)}
+  .inote{font-size:13.5px;margin-top:6px;padding:6px 8px;background:#2a2f1e;border:1px solid #3c4426;border-radius:8px}
+  .ord{display:flex;flex-direction:column;gap:2px}
+  .ord button{width:28px;height:22px;background:var(--card);border:1px solid var(--line);border-radius:6px;color:var(--mut);font-size:11px;padding:0}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .actions .btn{background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:6px 10px;font-size:13px;text-decoration:none;display:inline-block}
+  .actions .btn.map{border-color:var(--train)}
+  .add-btn{width:100%;margin-top:12px;background:transparent;border:1px dashed var(--line);color:var(--mut);border-radius:10px;padding:10px;font-size:14px}
+  .hidden-toggle{width:100%;margin-top:10px;background:transparent;border:none;color:var(--mut);font-size:13px;text-decoration:underline}
+  .daynote{width:100%;margin-top:12px;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:10px;font:inherit;min-height:44px;resize:vertical}
+  .daynote-lbl{font-size:12px;color:var(--mut);margin-top:12px;text-transform:uppercase;letter-spacing:.04em}
+  .nav-days{display:flex;gap:10px;margin:4px 0 14px}
+  .nav-days button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;font-size:14px}
+  .ov-row{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;color:var(--txt)}
+  .ov-row.now{border-color:var(--accent)}
+  .ov-date{flex:0 0 46px;text-align:center}
+  .ov-d{font-size:20px;font-weight:700;line-height:1}
+  .ov-m{font-size:11px;color:var(--mut);text-transform:uppercase}
+  .ov-body{flex:1;min-width:0}
+  .ov-stop{font-weight:600}
+  .ov-sub{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .count{text-align:center;padding:30px 10px}
+  .count .n{font-size:64px;font-weight:800;color:var(--accent);line-height:1}
+  .cl-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .cl-item .chk{margin-top:0}
+  .cl-item .t{flex:1}
+  .cl-item.done .t{text-decoration:line-through;color:var(--mut)}
+  .cl-del{background:transparent;border:none;color:var(--mut);font-size:18px}
+  .cl-h{font-weight:700;margin:18px 0 4px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+  .toast.show{opacity:.92}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-title" id="hTitle">Cina · Itinerario</div>
+  <div class="h-sub" id="hSub"></div>
+  <nav>
+    <button data-view="today" class="on">Oggi</button>
+    <button data-view="overview">Itinerario</button>
+    <button data-view="checklist">Checklist</button>
+  </nav>
+</header>
+<main id="app"></main>
+<div class="toast" id="toast"></div>
+
+<script src="logic.js"></script>
+<script>
+(function(){
+  "use strict";
+  const KEY = "china-trip-state-v1";
+  const $app = document.getElementById("app");
+  let SEED = null, state = load(), view = "today", focusDay = 0;
+
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } }
+  function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+  function dayState(id){ (state.days = state.days||{}); return (state.days[id] = state.days[id] || {items:{},order:null,userItems:[],note:""}); }
+  const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1400); }
+
+  // ---- item rendering ----
+  function navObj(it){
+    if (it.kind === "transport") return { title: it.depStation, zh: it.depStationZh || it.depStation, city: it.from, cityZh: it.cityZh };
+    return it;
+  }
+  function itemHTML(it){
+    const nav = navObj(it);
+    const canNav = !!(nav.zh || nav.title);
+    const isPlace = it.kind === "place";
+    let meta = "";
+    if (it.kind === "transport"){
+      meta = `<div class="imeta">`+
+        (it.code?`<b>${esc(it.code)}</b> · `:``)+
+        (it.dep||it.arr?`${esc(it.dep)}${it.arr?" → "+esc(it.arr):""} · `:``)+
+        `${esc(it.dur||"")}</div>`+
+        `<div class="idesc">${esc(it.from)} → ${esc(it.to)}</div>`+
+        (it.note?`<div class="idesc">${esc(it.note)}</div>`:``);
+    } else if (it.kind === "lodging"){
+      meta = (it.price?`<div class="imeta"><b>${esc(it.price)}</b> / notte</div>`:``)+
+        (it.desc?`<div class="idesc">${esc(it.desc)}</div>`:``);
+    } else {
+      meta = it.desc?`<div class="idesc">${esc(it.desc)}</div>`:``;
+    }
+    const actions = [];
+    if (canNav){
+      actions.push(`<a class="btn map" target="_blank" rel="noopener" href="${esc(CT.gmaps(nav))}">🗺 Maps</a>`);
+      actions.push(`<a class="btn map" target="_blank" rel="noopener" href="${esc(CT.amap(nav))}">🧭 Amap</a>`);
+    }
+    if (nav.zh) actions.push(`<button class="btn" data-act="copy" data-copy="${esc(nav.zh)}">📋 ${esc(nav.zh)}</button>`);
+    actions.push(`<button class="btn" data-act="note">📝 Nota</button>`);
+    if (isPlace) actions.push(`<button class="btn" data-act="hide">🙈 Nascondi</button>`);
+
+    return `<div class="item ${it.kind} ${it.done?"done":""}" data-id="${esc(it.id)}">
+      <div class="irow">
+        ${isPlace?`<button class="chk ${it.done?"on":""}" data-act="done">✓</button>`:``}
+        <div class="ibody">
+          <div class="ititle">${esc(it.title)}${it.zh&&it.kind==="place"?`<span class="zh">${esc(it.zh)}</span>`:``}</div>
+          ${meta}
+          ${it.note?`<div class="inote">📝 ${esc(it.note)}</div>`:``}
+        </div>
+        <div class="ord"><button data-act="up">▲</button><button data-act="down">▼</button></div>
+      </div>
+      <div class="actions">${actions.join("")}</div>
+    </div>`;
+  }
+
+  function dayCardHTML(i, opts){
+    opts = opts||{};
+    const day = SEED.days[i];
+    const ds = dayState(day.id);
+    const merged = CT.mergeDayItems(day.items, ds);
+    const items = merged.visible.map(itemHTML).join("");
+    const hiddenBtn = merged.hidden.length ? `<button class="hidden-toggle" data-act="unhide">Mostra ${merged.hidden.length} nascosti</button>` : "";
+    return `<div class="card day" data-day="${i}">
+      <div class="day-head">
+        <span class="day-date">${esc(day.dow)} ${esc(day.date.slice(8))}/${esc(day.date.slice(5,7))}</span>
+        <span class="day-stop">${esc(day.stop)}</span>
+        ${day.night?`<span class="badge">${esc(day.night)}</span>`:``}
+        ${opts.today?`<span class="badge today">OGGI</span>`:``}
+      </div>
+      ${items}
+      <button class="add-btn" data-act="add">+ Aggiungi attività</button>
+      ${hiddenBtn}
+      <div class="daynote-lbl">Note del giorno</div>
+      <textarea class="daynote" data-act="daynote" placeholder="Appunti liberi…">${esc(ds.note||"")}</textarea>
+    </div>`;
+  }
+
+  // ---- views ----
+  function render(){
+    document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on", b.dataset.view===view || (view==="day"&&b.dataset.view==="overview")));
+    if (view==="today") return renderToday();
+    if (view==="overview") return renderOverview();
+    if (view==="day") return renderDayView();
+    if (view==="checklist") return renderChecklist();
+  }
+
+  function renderToday(){
+    const dates = SEED.days.map(d=>d.date);
+    const rv = CT.resolveView(dates, CT.todayISO());
+    if (rv.phase === "before"){
+      $app.innerHTML = `<div class="card count"><div class="n">${rv.daysUntil}</div>
+        <div>giorni alla partenza</div>
+        <div class="h-sub" style="margin-top:8px">Si parte il 23 agosto · MXP → Pechino</div></div>`;
+      return;
+    }
+    if (rv.phase === "after"){
+      $app.innerHTML = `<div class="card count"><div style="font-size:44px">🎉</div><div>Viaggio concluso</div></div>`;
+      view="overview"; return renderOverview();
+    }
+    $app.innerHTML = dayCardHTML(rv.index, {today:true});
+  }
+
+  function renderDayView(){
+    const nav = `<div class="nav-days">
+      <button data-act="prev" ${focusDay<=0?"disabled":""}>‹ Prec</button>
+      <button data-act="next" ${focusDay>=SEED.days.length-1?"disabled":""}>Succ ›</button>
+    </div>`;
+    const todayIdx = SEED.days.map(d=>d.date).indexOf(CT.todayISO());
+    $app.innerHTML = nav + dayCardHTML(focusDay, {today:focusDay===todayIdx});
+  }
+
+  function renderOverview(){
+    const today = CT.todayISO();
+    $app.innerHTML = SEED.days.map((d,i)=>{
+      const places = d.items.filter(x=>x.kind==="place").map(x=>x.title).join(" · ");
+      return `<button class="ov-row ${d.date===today?"now":""}" data-goto="${i}">
+        <div class="ov-date"><div class="ov-d">${d.date.slice(8)}</div><div class="ov-m">${d.dow} ${["","gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"][+d.date.slice(5,7)]}</div></div>
+        <div class="ov-body"><div class="ov-stop">${esc(d.stop)}${d.night?` <span class="badge">${esc(d.night)}</span>`:""}</div>
+        <div class="ov-sub">${esc(places||"—")}</div></div>
+      </button>`;
+    }).join("");
+  }
+
+  function renderChecklist(){
+    state.checklists = state.checklists || seedChecklists();
+    const cl = state.checklists;
+    $app.innerHTML = Object.keys(cl).map(name=>{
+      const items = cl[name].map((it,idx)=>`<div class="cl-item ${it.done?"done":""}" data-list="${esc(name)}" data-idx="${idx}">
+        <button class="chk ${it.done?"on":""}" data-act="cl-toggle">✓</button>
+        <span class="t">${esc(it.text)}</span>
+        <button class="cl-del" data-act="cl-del">✕</button></div>`).join("");
+      return `<div class="card"><div class="cl-h">${esc(name)}</div>${items}
+        <button class="add-btn" data-act="cl-add" data-list="${esc(name)}">+ Aggiungi</button></div>`;
+    }).join("");
+  }
+  function seedChecklists(){
+    const out={}; for (const k in SEED.checklists) out[k]=SEED.checklists[k].map(t=>({text:t,done:false})); return out;
+  }
+
+  // ---- events (delegated) ----
+  document.querySelector("nav").addEventListener("click", e=>{
+    const b=e.target.closest("button[data-view]"); if(!b) return;
+    view=b.dataset.view; render();
+  });
+
+  $app.addEventListener("click", e=>{
+    const goto=e.target.closest("[data-goto]");
+    if (goto){ focusDay=+goto.dataset.goto; view="day"; render(); return; }
+    const btn=e.target.closest("[data-act]"); if(!btn) return;
+    const act=btn.dataset.act;
+
+    // day navigation
+    if (act==="prev"){ focusDay=Math.max(0,focusDay-1); render(); return; }
+    if (act==="next"){ focusDay=Math.min(SEED.days.length-1,focusDay+1); render(); return; }
+
+    // checklist actions
+    if (act.startsWith("cl-")){ return checklistAction(act, btn); }
+
+    // day-scoped actions
+    const dayEl=btn.closest(".day"); if(!dayEl) return;
+    const di=+dayEl.dataset.day, day=SEED.days[di], ds=dayState(day.id);
+
+    if (act==="add"){
+      const t=prompt("Nuova attività:"); if(!t) return;
+      const id="u"+Date.now();
+      ds.userItems.push({id, kind:"place", title:t, city:day.city, cityZh:day.cityZh});
+      ensureOrder(day, ds); ds.order.push(id); save(); render(); return;
+    }
+    if (act==="daynote"){ return; } // handled on input below
+    if (act==="unhide"){
+      for (const k in ds.items) if(ds.items[k]) ds.items[k].hidden=false;
+      save(); render(); return;
+    }
+
+    const itemEl=btn.closest(".item"); if(!itemEl) return;
+    const id=itemEl.dataset.id;
+    const st=(ds.items[id]=ds.items[id]||{});
+    if (act==="copy"){ copy(btn.dataset.copy); return; }
+    if (act==="done"){ st.done=!st.done; save(); render(); return; }
+    if (act==="hide"){ st.hidden=true; save(); render(); return; }
+    if (act==="note"){
+      const cur=st.note||""; const v=prompt("Nota:", cur);
+      if (v===null) return; st.note=v.trim(); save(); render(); return;
+    }
+    if (act==="up"||act==="down"){
+      ensureOrder(day, ds);
+      ds.order=CT.reorderIds(ds.order, id, act==="up"?-1:1);
+      save(); render(); return;
+    }
+  });
+
+  // day note (textarea) — save on change
+  $app.addEventListener("change", e=>{
+    const ta=e.target.closest("textarea[data-act='daynote']"); if(!ta) return;
+    const dayEl=ta.closest(".day"); const day=SEED.days[+dayEl.dataset.day];
+    dayState(day.id).note=ta.value; save();
+  });
+
+  function ensureOrder(day, ds){
+    if (!ds.order || !ds.order.length){
+      ds.order=day.items.map(i=>i.id).concat(ds.userItems.map(i=>i.id));
+    }
+  }
+
+  function checklistAction(act, btn){
+    const cl=state.checklists;
+    if (act==="cl-add"){
+      const name=btn.dataset.list, t=prompt("Aggiungi a "+name+":"); if(!t) return;
+      cl[name].push({text:t,done:false}); save(); render(); return;
+    }
+    const row=btn.closest(".cl-item"); if(!row) return;
+    const name=row.dataset.list, idx=+row.dataset.idx;
+    if (act==="cl-toggle"){ cl[name][idx].done=!cl[name][idx].done; save(); render(); }
+    if (act==="cl-del"){ cl[name].splice(idx,1); save(); render(); }
+  }
+
+  function copy(text){
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>toast("Copiato: "+text),()=>fallbackCopy(text));
+    else fallbackCopy(text);
+  }
+  function fallbackCopy(text){
+    const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy");toast("Copiato: "+text);}catch(e){} ta.remove();
+  }
+
+  // ---- boot ----
+  fetch("seed.json").then(r=>r.json()).then(seed=>{
+    SEED=seed;
+    document.getElementById("hTitle").textContent=seed.title||"Itinerario";
+    document.getElementById("hSub").textContent=seed.subtitle||"";
+    if (!state.checklists) { state.checklists=seedChecklists(); save(); }
+    render();
+  }).catch(err=>{ $app.innerHTML=`<div class="card">Impossibile caricare l'itinerario.<br><small>${esc(err.message)}</small></div>`; });
+
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>
