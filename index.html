@@ -43,6 +43,10 @@
   .item{border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;margin-top:10px;background:var(--card2)}
   .item.transport{border-left:3px solid var(--train)}
   .item.lodging{border-left:3px solid var(--lodge)}
+  .item.todo{border-left:3px solid var(--accent)}
+  .pill{font-size:10.5px;padding:2px 7px;border-radius:99px;margin-left:6px;white-space:nowrap;vertical-align:1px;font-weight:600}
+  .pill.ok{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok);border:1px solid var(--ok)}
+  .pill.warn{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);border:1px solid var(--accent)}
   .irow{display:flex;gap:10px;align-items:flex-start}
   .chk{flex:0 0 auto;width:26px;height:26px;border-radius:50%;border:2px solid var(--mut);background:transparent;color:transparent;font-size:15px;line-height:22px;text-align:center;margin-top:1px}
   .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
@@ -132,20 +136,29 @@
     if (it.kind === "transport") return { title: it.depStation, zh: it.depStationZh || it.depStation, city: it.from, cityZh: it.cityZh };
     return it;
   }
+  // "booked" / "tobuy" / undefined -> a pill next to the title.
+  function statusHTML(it){
+    if (it.status === "booked") return `<span class="pill ok">✅ prenotato</span>`;
+    if (it.status === "tobuy") return `<span class="pill warn">🛒 in vendita dal ${esc(it.buyFrom||"?")}</span>`;
+    return "";
+  }
   function itemHTML(it){
     const nav = navObj(it);
-    const canNav = !!(nav.zh || nav.title);
     const isPlace = it.kind === "place";
+    const isTodo = it.kind === "todo";
+    const canNav = !isTodo && !!(nav.zh || nav.title);
     let meta = "";
     if (it.kind === "transport"){
       meta = `<div class="imeta">`+
         (it.code?`<b>${esc(it.code)}</b> · `:``)+
         (it.dep||it.arr?`${esc(it.dep)}${it.arr?" → "+esc(it.arr):""} · `:``)+
-        `${esc(it.dur||"")}</div>`+
+        `${esc(it.dur||"")}${it.price?" · "+esc(it.price):""}${it.ref?" · 🎫 "+esc(it.ref):""}</div>`+
         `<div class="idesc">${esc(it.from)} → ${esc(it.to)}</div>`+
         (it.note?`<div class="idesc">${esc(it.note)}</div>`:``);
     } else if (it.kind === "lodging"){
-      meta = (it.price?`<div class="imeta"><b>${esc(it.price)}</b> / notte</div>`:``)+
+      meta = `<div class="imeta">`+
+        [it.price?`<b>${esc(it.price)}</b>`:"", esc(it.nights||""), it.ref?"🎫 "+esc(it.ref):""].filter(Boolean).join(" · ")+`</div>`+
+        (it.room?`<div class="imeta">${esc(it.room)}</div>`:``)+
         (it.desc?`<div class="idesc">${esc(it.desc)}</div>`:``);
     } else {
       meta = it.desc?`<div class="idesc">${esc(it.desc)}</div>`:``;
@@ -160,15 +173,17 @@
       actions.push(`<a class="btn map"${tgt} href="${esc(gmHref)}">🗺 Maps</a>`);
       actions.push(`<a class="btn map"${tgt} href="${esc(amHref)}">🧭 Amap</a>`);
     }
-    if (nav.zh) actions.push(`<button class="btn" data-act="copy" data-copy="${esc(nav.zh)}">📋 ${esc(nav.zh)}</button>`);
+    if (nav.zh && !isTodo) actions.push(`<button class="btn" data-act="copy" data-copy="${esc(nav.zh)}">📋 ${esc(nav.zh)}</button>`);
+    // Il n° d'ordine è troncato nel seed (repo pubblico): mostrato, non copiabile.
+    // Il numero intero va incollato a mano nella Nota, che vive solo in localStorage.
     actions.push(`<button class="btn" data-act="note">📝 Nota</button>`);
     if (isPlace) actions.push(`<button class="btn" data-act="hide">🙈 Nascondi</button>`);
 
     return `<div class="item ${it.kind} ${it.done?"done":""}" data-id="${esc(it.id)}">
       <div class="irow">
-        ${isPlace?`<button class="chk ${it.done?"on":""}" data-act="done">✓</button>`:``}
+        ${isPlace||isTodo?`<button class="chk ${it.done?"on":""}" data-act="done">✓</button>`:``}
         <div class="ibody">
-          <div class="ititle">${esc(it.title)}${it.zh&&it.kind==="place"?`<span class="zh">${esc(it.zh)}</span>`:``}</div>
+          <div class="ititle">${esc(it.title)}${it.zh&&it.kind==="place"?`<span class="zh">${esc(it.zh)}</span>`:``}${statusHTML(it)}</div>
           ${meta}
           ${it.note?`<div class="inote">📝 ${esc(it.note)}</div>`:``}
         </div>
