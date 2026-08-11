@@ -1,0 +1,7 @@
+# L'originale in chiaro non entra mai nel repo pubblico.
+seed.json
+
+# Nemmeno il cifrato entra per sbaglio: un `git add -A` non deve poter raccogliere
+# un seed.enc.json generato per una prova. Per pubblicarlo serve un atto esplicito:
+#   git add -f seed.enc.json
+seed.enc.json

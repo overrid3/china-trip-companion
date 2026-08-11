@@ -108,5 +108,83 @@
       "S.browser_fallback_url=" + encodeURIComponent(web) + ";end";
   }
 
-  return { todayISO, diffDays, resolveView, reorderIds, mergeDayItems, gmaps, amap, amapApp, gmapsApp };
+  // tel: link. Strips the spaces Trip.com puts in the numbers; keeps the leading +
+  // so the call works from an Italian SIM roaming in China without editing the prefix.
+  function tel(number) {
+    return "tel:" + String(number || "").replace(/[^\d+]/g, "");
+  }
+
+  // WeChat deliberately has NO public deep link to add a contact by phone number —
+  // Tencent removed it years ago because it was a spam vector. So the honest best
+  // is: open the app and let the user paste. The caller copies the number to the
+  // clipboard first, then the flow is + › Aggiungi contatti › Numero di telefono.
+  // Same intent:// trick as Amap: from a PWA webview a plain weixin:// often dies.
+  function wechatApp() {
+    return "intent://#Intent;scheme=weixin;package=com.tencent.mm;" +
+      "S.browser_fallback_url=" + encodeURIComponent("https://weixin.qq.com/") + ";end";
+  }
+
+  // Hotel check-in windows are "after 14:00" / "before 12:00" — a plain string in the
+  // seed. Returns the hour so the day view can sort the check-in into the timeline.
+  function parseTime(s) {
+    const m = /(\d{1,2}):(\d{2})/.exec(String(s || ""));
+    return m ? +m[1] * 60 + +m[2] : null;
+  }
+
+  // Sort key for the timeline: items with a real clock first, in order; everything
+  // without one keeps its authored position after them. A calm itinerary genuinely
+  // has no time for the temple, so we don't invent one.
+  function itemMinutes(it) {
+    return parseTime(it.t || it.dep || (it.kind === "lodging" ? it.ci : ""));
+  }
+  function sortByTime(items) {
+    return items
+      .map((it, i) => ({ it, i, m: itemMinutes(it) }))
+      .sort((a, b) => (a.m === null) - (b.m === null) || (a.m - b.m) || (a.i - b.i))
+      .map((x) => x.it);
+  }
+
+  // The next thing that moves you: first transport of the day still ahead of `now`
+  // (minutes since midnight), else the first one not ticked off.
+  function nextMove(items, nowMin, done) {
+    const moves = items.filter((i) => i.kind === "transport");
+    const ahead = moves.find((i) => { const m = itemMinutes(i); return m !== null && m > nowMin; });
+    return ahead || moves.find((i) => !(done || {})[i.id]) || null;
+  }
+
+  // Deadlines still open, soonest first, with the days left. Anything already ticked
+  // drops out; anything overdue stays and sorts to the top — it is the loudest case.
+  function dueList(deadlines, todayStr, done) {
+    return (deadlines || [])
+      .filter((d) => !(done || {})[d.id])
+      .map((d) => ({ ...d, days: diffDays(todayStr, d.due) }))
+      .sort((a, b) => a.days - b.days);
+  }
+
+  // Minimal VCALENDAR: all-day VEVENTs with a 9:00 alarm the same morning. No library —
+  // the phone's own calendar is the only thing that can actually ring while the app is shut.
+  function toICS(deadlines, prodid) {
+    const stamp = (iso) => iso.replace(/-/g, "");
+    const esc = (s) => String(s || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "CALSCALE:GREGORIAN",
+      "PRODID:-//" + (prodid || "china-trip") + "//IT"];
+    for (const d of deadlines) {
+      const end = new Date(Date.UTC(...d.due.split("-").map(Number).map((n, i) => (i === 1 ? n - 1 : n))));
+      end.setUTCDate(end.getUTCDate() + 1); // DTEND is exclusive for all-day events
+      lines.push("BEGIN:VEVENT",
+        "UID:" + d.id + "@china-trip",
+        "DTSTART;VALUE=DATE:" + stamp(d.due),
+        "DTEND;VALUE=DATE:" + stamp(todayISO(end)),
+        "SUMMARY:" + esc(d.title),
+        "DESCRIPTION:" + esc([d.desc, d.url].filter(Boolean).join("\n")),
+        "BEGIN:VALARM", "TRIGGER:PT9H", "ACTION:DISPLAY",
+        "DESCRIPTION:" + esc(d.title), "END:VALARM",
+        "END:VEVENT");
+    }
+    lines.push("END:VCALENDAR");
+    return lines.join("\r\n");
+  }
+
+  return { todayISO, diffDays, resolveView, reorderIds, mergeDayItems, gmaps, amap, amapApp, gmapsApp,
+           tel, wechatApp, parseTime, itemMinutes, sortByTime, nextMove, dueList, toICS };
 });
