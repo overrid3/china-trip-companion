@@ -119,9 +119,9 @@ async function encrypt() {
     console.log("  Mettila nel password manager di ENTRAMBI, adesso.");
     console.log("  Non esiste recupero: persa questa, il file non si riapre.\n");
   } else {
+    // Niente conferma: la password si incolla dal password manager, e un errore di
+    // battitura non e' distruttivo — seed.json resta qui, basta rilanciare il comando.
     p1 = await askHidden("Password:  ");
-    const p2 = await askHidden("Ripetila:  ");
-    if (p1 !== p2) throw new Error("Le due password non coincidono");
     if (p1.length < 10) throw new Error("Almeno 10 caratteri: è l'unica cosa che protegge il file");
   }
 
@@ -131,10 +131,15 @@ async function encrypt() {
 
   fs.writeFileSync(ENC, JSON.stringify(envelope));
   const kb = (fs.statSync(ENC).size / 1024).toFixed(1);
-  console.log(`✓ seed.enc.json  ${kb} KB  (${seed.days.length} giorni, ${CTC.ITER} round PBKDF2)`);
+  const d = seed.days;
+  // Non un parametro crittografico: e' l'itinerario che c'e' dentro, cosi' se cifri
+  // il file sbagliato te ne accorgi subito.
+  console.log(`✓ seed.enc.json  ${kb} KB  ·  AES-GCM 256, ${CTC.ITER} round PBKDF2`);
+  console.log(`  Contiene: itinerario di ${d.length} giorni, dal ${d[0].date} al ${d[d.length - 1].date}`);
   console.log("");
-  console.log("  Per pubblicarlo (e' gitignorato apposta, serve il -f):");
-  console.log("    git add -f seed.enc.json && git commit --amend --no-edit");
+  console.log("  Verificalo:   node tools/seed-crypt.js decrypt");
+  console.log("  Pubblicalo:   git add -f seed.enc.json   (il -f serve, e' gitignorato apposta)");
+  console.log("                git commit --amend --no-edit && git push --force-with-lease");
   console.log("  seed.json resta solo qui: e' l'originale modificabile, non va nel repo.");
 }
 
