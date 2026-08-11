@@ -1,5 +1,5 @@
 // Offline app shell. Bump CACHE on every deploy to push updates to installed phones.
-const CACHE = "china-trip-v11";
+const CACHE = "china-trip-v12";
 const ASSETS = [
   "./", "index.html", "logic.js", "crypto.js", "seed.enc.json", "manifest.json", "icon.svg",
   // Le foto delle città: ~444 KB, scaricate PRIMA di partire. In Cina github.io non risponde.
