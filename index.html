@@ -210,6 +210,9 @@
   .wi.lodging{background:color-mix(in srgb,var(--gold) 13%,transparent)}
   .wi.flight{background:color-mix(in srgb,var(--sky) 12%,transparent)}
   .wi.rail{background:color-mix(in srgb,var(--coral) 12%,transparent)}
+  .wi.ticket{background:color-mix(in srgb,var(--jade) 12%,transparent)}
+  .wl{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:6px 10px;border-radius:9px;
+      border:1px solid var(--line);color:var(--mut);font:600 12px inherit;text-decoration:none}
   .wb{flex:1;min-width:0}
   .wb .wt{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .wb .wm{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
@@ -688,17 +691,25 @@
 
   // ══════════════ vista WALLET ══════════════
   function renderWallet(){
-    const rows=[]; let lodging=0, flights=0, toBuy=0;
+    const rows=[]; let lodging=0, flights=0, tickets=0, toBuy=0;
     SEED.days.forEach((d,di)=>d.items.forEach(it=>{
       if (it.kind==="lodging"){ rows.push({it,di,type:"lodging"}); lodging += money(it.price); }
       else if (it.kind==="transport" && (it.status==="booked"||it.status==="tobuy")){
         rows.push({it,di,type:/fl|air/.test(it.mode||"")?"flight":"rail"});
         if (it.status==="booked") flights += money(it.price); else toBuy++;
       }
+      // ponytail: qualsiasi altra voce con un numero di prenotazione, un link d'acquisto
+      // o ancora da comprare è un biglietto. Nessun campo `kind` nuovo da tenere allineato col seed.
+      else if (it.ref || it.buyUrl || it.status==="tobuy"){
+        rows.push({it,di,type:"ticket"});
+        if (it.status==="tobuy") toBuy++; else tickets += money(it.price);
+      }
     }));
     const cards = rows.map(({it,di,type})=>{
       const ref = refs()[it.id] || it.ref;
-      const icon = type==="lodging"?"🏨":type==="flight"?"✈️":"🚄";
+      const icon = type==="lodging"?"🏨":type==="flight"?"✈️":type==="ticket"?"🎫":"🚄";
+      const buy = it.buyUrl
+        ? `<a class="wl" href="${esc(it.buyUrl)}" target="_blank" rel="noopener">↗ ${esc(it.buyOn||"Apri")}</a>` : "";
       const co = it.ci ? `<div class="cio">
           <div class="s"><div class="k">Check-in</div><div class="v">${esc(fmtDate(SEED.days[di].date))}</div>
             <div class="h">dopo le ${esc(it.ci)}</div></div>
@@ -719,23 +730,33 @@
                 ? "prenotato · numero non salvato"
                 : "da comprare"+(it.buyFrom?", dal "+esc(it.buyFrom):"")}</span>`}
           <button class="cpy" data-act="setref" data-id="${esc(it.id)}">✏️</button></div>
+        ${buy}
       </div></div>`;
     }).join("");
 
     $app.innerHTML = `<div class="pad">
-      <div class="top"><div class="tt"><div class="t1">${rows.length} prenotazioni · ${toBuy} treni da comprare</div>
+      <div class="top"><div class="tt"><div class="t1">${rows.length} prenotazioni · ${toBuy} da comprare</div>
         <div class="t2">Wallet</div></div></div>
-      <div class="tot"><div class="k">Speso finora</div><div class="v">€ ${(lodging+flights).toFixed(2).replace(".",",")}</div>
+      <div class="tot"><div class="k">Speso finora</div><div class="v">€ ${(lodging+flights+tickets).toFixed(2).replace(".",",")}</div>
         <div class="sp"><span>Alloggi<b>€ ${lodging.toFixed(2).replace(".",",")}</b></span>
-          <span>Voli<b>€ ${flights.toFixed(2).replace(".",",")}</b></span>
-          <span>Treni<b>—</b></span></div></div>
+          <span>Viaggi<b>€ ${flights.toFixed(2).replace(".",",")}</b></span>
+          <span>Biglietti<b>€ ${tickets.toFixed(2).replace(".",",")}</b></span></div></div>
       ${cards}
       <div style="font-size:11.5px;color:var(--mut);text-align:center;padding:14px 8px;line-height:1.5">
         ✏️ incolla il numero intero: resta solo su questo telefono.<br>
         Le immagini (QR, voucher, e-ticket) stanno nella galleria, non qui.</div>
     </div>`;
   }
-  const money = s => { const m=/([\d.,]+)/.exec(String(s||"").replace(/\./g,"")); return m?parseFloat(m[1].replace(",","."))||0:0; };
+  // ponytail: i prezzi in ¥ sommati com'erano gonfiavano "Speso finora" di centinaia di euro.
+  // Tasso fisso: al totale del wallet serve l'ordine di grandezza, non il cambio del giorno.
+  const CNY_EUR = 7.78;
+  const money = s => {
+    const t = String(s||"").replace(/\./g,"");
+    const m = /([\d,]+)/.exec(t);
+    if (!m) return 0;
+    const v = parseFloat(m[1].replace(",",".")) || 0;
+    return /¥/.test(t) ? v/CNY_EUR : v;
+  };
 
   // ══════════════ vista FRASI ══════════════
   function renderPhrases(){
