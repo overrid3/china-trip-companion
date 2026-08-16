@@ -358,6 +358,18 @@
 
   function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
   function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+  // Dove eri: la PWA viene uccisa appena passi a un'altra app, e al rientro riparte da zero.
+  // ponytail: chiave separata da `state`, così uscire dall'app non riscrive note e spunte.
+  const UI_KEY = "ct-ui";
+  const loadUI = () => { try{ return JSON.parse(localStorage.getItem(UI_KEY)) || {}; }catch(e){ return {}; } };
+  function saveUI(){
+    try{ localStorage.setItem(UI_KEY, JSON.stringify({view, focusDay, y:Math.round(scrollY)})); }catch(e){}
+  }
+  // pagehide copre reload e chiusura, visibilitychange lo switch su un'altra app:
+  // su iOS è l'unico dei due che scatta davvero prima che il sistema tolga la pagina.
+  addEventListener("pagehide", saveUI);
+  addEventListener("visibilitychange", ()=>{ if (document.hidden) saveUI(); });
   function dayState(id){ (state.days=state.days||{}); return (state.days[id]=state.days[id]||{items:{},order:null,userItems:[],note:""}); }
   const ticks = () => (state.ticks = state.ticks || {});
   const refs  = () => (state.refs  = state.refs  || {});
@@ -988,7 +1000,11 @@
     const p = phase();
     focusDay = null;
     if (p.phase==="after") view="trip";
+    const ui = loadUI();
+    if (TABS.some(t=>t[0]===ui.view)) view = ui.view;
+    if (SEED.days[ui.focusDay]) focusDay = ui.focusDay;   // un giorno sparito dal seed torna al default
     render();
+    if (ui.y) scrollTo(0, ui.y);
     notifyDue();
     if ("Notification" in window && Notification.permission==="default" && p.phase==="before")
       document.addEventListener("click", function ask(){
