@@ -249,6 +249,14 @@
   .zhc .k{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:800}
   .zhc .zh{font-size:25px;font-weight:700;line-height:1.32;margin:8px 0 6px}
   .zhc .it{font-size:13.5px;color:var(--mut)}
+  .msgc{background:var(--paper);border-radius:22px;padding:17px;margin-bottom:12px;box-shadow:var(--sh);border:1px solid var(--line)}
+  .msgc .k{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:800}
+  .msgc .zh{font-size:16.5px;font-weight:600;line-height:1.62;margin:10px 0 0}
+  .msgc .it{font-size:13.5px;color:var(--mut);line-height:1.6;margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+  .msgc .trx{display:flex;gap:7px;margin-top:14px}
+  .msgc .trx>*{flex:1;font-size:12.5px;font-weight:800;font-family:inherit;padding:10px 6px;border-radius:14px;
+    background:var(--paper2);border:1px solid var(--line);color:var(--ink);text-align:center;text-decoration:none}
+  .msgc .trx .pri{background:var(--coral);border-color:var(--coral);color:#fff}
   .rules .rl{display:flex;gap:9px;font-size:13.5px;padding:6px 0;line-height:1.45}
   .rules .rl i{font-style:normal;color:var(--coral);flex:0 0 auto}
 
@@ -325,7 +333,7 @@
   const $nav = document.getElementById("nav");
   const $sheet = document.getElementById("sheet");
   const MONTHS = ["","gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
-  const TABS = [["day","Oggi"],["trip","Viaggio"],["wallet","Wallet"],["phrases","Frasi"]];
+  const TABS = [["day","Oggi"],["trip","Viaggio"],["wallet","Wallet"],["phrases","Messaggi"]];
   // Icone della barra: SVG a tratto, non emoji. Le emoji cambiano faccia su ogni
   // sistema, non si tingono col tema e a 17px sono illeggibili.
   const SV = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -774,17 +782,24 @@
   function renderPhrases(){
     const h = tonight();
     const emg = (SEED.emergency||[]).map(e=>`<a href="tel:${esc(e.n)}"><b>${esc(e.n)}</b><span>${esc(e.t)}</span></a>`).join("");
-    const cards = (SEED.phrases||[]).map((p,n)=>{
-      const zh = p.dyn==="lodging" && h ? `${p.zh}：<br>${h.zh||h.title}` : p.zh;
+    const cards = (SEED.phrases||[]).map(p=>{
+      const zh = p.dyn==="lodging" && h ? `${p.zh}\uff1a<br>${h.zh||h.title}` : p.zh;
       const it = p.dyn==="lodging" && h ? `${p.it}: ${h.title}` : p.it;
-      return `<button class="zhc" data-act="copy" data-copy="${esc(zh.replace(/<br>/g,"\n"))}">
-        <div class="k">${esc(p.k)}</div><div class="zh">${zh}</div><div class="it">${esc(it)}</div></button>`;
+      const plain = t => t.replace(/<br>/g,"\n");
+      const q = encodeURIComponent(plain(it));
+      return `<div class="msgc">
+        <div class="k">${esc(p.k)}</div><div class="zh">${zh}</div><div class="it">${it}</div>
+        <div class="trx">
+          <button class="pri" data-act="copy" data-copy="${esc(plain(zh))}">\ud83d\udccb Cinese</button>
+          <a href="https://www.deepl.com/translator#it/zh/${q}" target="_blank" rel="noopener">\u270f\ufe0f DeepL</a>
+          <a href="https://translate.google.com/?sl=it&tl=zh-CN&op=translate&text=${q}" target="_blank" rel="noopener">\u270f\ufe0f Translate</a>
+        </div></div>`;
     }).join("");
     const rules = (SEED.rules||[]).map(r=>`<div class="rl"><i>▸</i><span>${esc(r)}</span></div>`).join("");
     const e = SEED.embassy||{};
     $app.innerHTML = `<div class="pad">
-      <div class="top"><div class="tt"><div class="t1">Gira lo schermo verso l'altra persona</div>
-        <div class="t2">Frasi</div></div></div>
+      <div class="top"><div class="tt"><div class="t1">Tocca Cinese per copiare · DeepL per riscrivere</div>
+        <div class="t2">Messaggi</div></div></div>
       <div class="emg">${emg}</div>
       ${cards}
       <div class="sec">Da ricordare</div>
