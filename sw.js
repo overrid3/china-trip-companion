@@ -1,7 +1,8 @@
 // Offline app shell. Bump CACHE on every deploy to push updates to installed phones.
-const CACHE = "china-trip-v18";
+const CACHE = "china-trip-v19";
 const ASSETS = [
-  "./", "index.html", "logic.js", "crypto.js", "seed.enc.json", "manifest.json", "icon.svg",
+  "./", "index.html", "logic.js", "crypto.js", "seed.enc.json", "manifest.json", "icon.svg", "icon-maskable.svg",
+  "icon-192.png", "icon-512.png", "icon-maskable-512.png",
   // Le foto delle città: ~444 KB, scaricate PRIMA di partire. In Cina github.io non risponde.
   "img/pechino.jpg", "img/xian.jpg", "img/emeishan.jpg", "img/chengdu.jpg",
   "img/wulingyuan.jpg", "img/zjjwest.jpg", "img/yangshuo.jpg"
